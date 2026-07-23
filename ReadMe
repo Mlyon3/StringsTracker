@@ -1,1 +1,9 @@
-This is just a placeholder so Chat can see this repository!
+# StringsTracker
+
+This repository is currently a lightweight sandbox for testing and experimentation.
+
+## Notes
+
+- The project is intentionally minimal while its initial structure is being defined.
+- Keep changes small and document any new setup or usage requirements here.
+- Add automated checks alongside future functionality whenever possible.
