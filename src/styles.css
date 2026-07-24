@@ -287,6 +287,11 @@ section + section {
   width: auto;
   min-height: auto;
 }
+.prefill-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
 .string-row {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
@@ -342,4 +347,85 @@ section + section {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+}
+
+.backup-page {
+  max-width: 760px;
+  margin: auto;
+}
+.page-intro {
+  max-width: 650px;
+  font-size: 1.08rem;
+}
+.backup-panel {
+  padding: 26px;
+  border: 1px solid #cbc8c0;
+  border-radius: 6px;
+  background: #fff;
+}
+.backup-panel h2,
+.restore-preview h3 {
+  margin-top: 0;
+}
+.record-summary,
+.notice,
+.warning {
+  padding: 12px 14px;
+  border-radius: 4px;
+}
+.record-summary {
+  background: #f1efe9;
+  font-size: 0.9rem;
+}
+.notice.success {
+  background: #dcebe3;
+  color: #173f38;
+}
+.notice.error,
+.warning {
+  background: #f5e4dd;
+  color: #712d21;
+}
+.file-field {
+  display: grid;
+  gap: 8px;
+  font-weight: 700;
+}
+.file-field input {
+  padding: 12px;
+  border: 1px solid #9da49f;
+  border-radius: 4px;
+  background: #f8f7f3;
+}
+.restore-preview {
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid #d5d2ca;
+}
+.confirm-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 20px 0;
+  font-weight: 700;
+}
+.confirm-row input {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+}
+.button.danger {
+  background: #812f25;
+}
+
+@media (max-width: 650px) {
+  nav {
+    gap: 8px;
+  }
+  nav a {
+    font-size: 0.76rem;
+  }
+  .backup-panel {
+    padding: 20px;
+  }
 }

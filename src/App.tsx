@@ -5,6 +5,7 @@ import {
   NewAssetPage,
   ProfilePage,
 } from './features/assets/AssetPages';
+import { BackupPage } from './features/backup/BackupPage';
 import { MaintenancePage } from './features/maintenance/MaintenancePage';
 import { RemindersPage } from './features/reminders/RemindersPage';
 import { StringChangePage } from './features/strings/StringChangePage';
@@ -19,6 +20,7 @@ function Layout() {
         <nav>
           <NavLink to="/reminders">Reminders</NavLink>
           <NavLink to="/archived">Archived</NavLink>
+          <NavLink to="/backup">Backup</NavLink>
         </nav>
       </header>
       <main>
@@ -30,6 +32,7 @@ function Layout() {
           <Route path="/assets/:id/maintenance" element={<MaintenancePage />} />
           <Route path="/reminders" element={<RemindersPage />} />
           <Route path="/archived" element={<ArchivedPage />} />
+          <Route path="/backup" element={<BackupPage />} />
         </Routes>
       </main>
     </>

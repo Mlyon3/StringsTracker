@@ -5,20 +5,82 @@ import { FormPage } from '../../components/FormPage';
 import { StringRows } from '../../components/StringRows';
 import { db, today } from '../../db';
 import { logStringChange } from '../../services';
-import { POSITIONS } from '../../types';
+import { POSITIONS, type UsualString } from '../../types';
+import {
+  emptyStringDraft,
+  loadStringEntryOptions,
+  type StringDraft,
+} from './stringEntry';
 
 export function StringChangePage() {
   const { id = '' } = useParams();
   const navigate = useNavigate();
   const asset = useLiveQuery(() => db.assets.get(id), [id]);
   const usual = useLiveQuery(() => db.usualSetups.get(id), [id]);
+  const entryOptions = useLiveQuery(() => loadStringEntryOptions(id), [id]);
   const positions = asset
     ? asset.instrumentFamily === 'other'
       ? asset.customPositions || []
       : POSITIONS[asset.instrumentFamily || 'violin']
     : [];
   const [selection, setSelection] = useState<string[] | null>(null);
+  const [drafts, setDrafts] = useState<Record<string, StringDraft>>({});
   const selected = selection ?? positions;
+  const visibleDrafts = Object.fromEntries(
+    positions.map((position) => [
+      position,
+      drafts[position] || emptyStringDraft(),
+    ]),
+  );
+
+  const applySetup = (strings: UsualString[]) => {
+    const available = new Set(positions);
+    const applicable = strings.filter((string) =>
+      available.has(string.position),
+    );
+    setSelection(
+      positions.filter((position) =>
+        applicable.some((string) => string.position === position),
+      ),
+    );
+    setDrafts((current) => {
+      const next = { ...current };
+      for (const string of applicable) {
+        next[string.position] = {
+          brand: string.brand,
+          model: string.model,
+          tensionOrGauge: string.tensionOrGauge || '',
+        };
+      }
+      return next;
+    });
+  };
+
+  const changeDraft = (
+    position: string,
+    field: keyof StringDraft,
+    value: string,
+  ) => {
+    setDrafts((current) => ({
+      ...current,
+      [position]: {
+        ...(current[position] || emptyStringDraft()),
+        [field]: value,
+      },
+    }));
+  };
+
+  const copyFirst = () => {
+    const first = selected[0];
+    if (!first) return;
+    const source = visibleDrafts[first];
+    setDrafts((current) => ({
+      ...current,
+      ...Object.fromEntries(
+        selected.map((position) => [position, { ...source }]),
+      ),
+    }));
+  };
   if (!asset) return null;
   return (
     <FormPage
@@ -27,10 +89,9 @@ export function StringChangePage() {
       onSubmit={async (form) => {
         const strings = selected.map((position) => ({
           position,
-          brand: String(form.get(`brand-${position}`)),
-          model: String(form.get(`model-${position}`)),
-          tensionOrGauge:
-            String(form.get(`gauge-${position}`) || '') || undefined,
+          brand: visibleDrafts[position].brand,
+          model: visibleDrafts[position].model,
+          tensionOrGauge: visibleDrafts[position].tensionOrGauge || undefined,
         }));
         await logStringChange(id, String(form.get('date')), strings, {
           cost: Number(form.get('cost')) || undefined,
@@ -65,31 +126,45 @@ export function StringChangePage() {
         Date
         <input type="date" name="date" defaultValue={today()} required />
       </label>
-      {usual && (
-        <button
-          type="button"
-          className="quiet"
-          onClick={() => {
-            usual.strings.forEach((string) => {
-              const brand = document.querySelector<HTMLInputElement>(
-                `[name="brand-${string.position}"]`,
-              );
-              const model = document.querySelector<HTMLInputElement>(
-                `[name="model-${string.position}"]`,
-              );
-              if (brand) brand.value = string.brand;
-              if (model) model.value = string.model;
-            });
-            setSelection(usual.strings.map((string) => string.position));
-          }}
-        >
-          Use usual setup
-        </button>
-      )}
+      <div className="prefill-actions" aria-label="Reuse string details">
+        {entryOptions?.current.length ? (
+          <button
+            type="button"
+            className="quiet"
+            onClick={() => applySetup(entryOptions.current)}
+          >
+            Use current setup
+          </button>
+        ) : null}
+        {usual?.strings.length ? (
+          <button
+            type="button"
+            className="quiet"
+            onClick={() => applySetup(usual.strings)}
+          >
+            Use usual setup
+          </button>
+        ) : null}
+        {entryOptions?.recent.length ? (
+          <button
+            type="button"
+            className="quiet"
+            onClick={() => applySetup(entryOptions.recent)}
+          >
+            Use most recent entry
+          </button>
+        ) : null}
+      </div>
       <Link className="text-button" to={`/assets/${id}`}>
         Skip current setup for now
       </Link>
-      <StringRows positions={selected} />
+      <StringRows
+        positions={selected}
+        drafts={visibleDrafts}
+        suggestions={entryOptions?.suggestions || []}
+        onChange={changeDraft}
+        onCopyFirst={copyFirst}
+      />
       <label>
         Total cost (optional)
         <input
