@@ -1,3 +1,135 @@
-import {afterEach,beforeEach,describe,expect,it} from 'vitest';import {JournalDB} from './db';import {db} from './db';import {createAsset,currentSetup,deleteEvent,logMaintenance,logStringChange,setArchived} from './services';
-beforeEach(async()=>{await db.delete();await db.open()});afterEach(()=>db.close());
-describe('local journal data behavior',()=>{it('creates distinct instrument and bow profiles',async()=>{const cello=await createAsset({profileType:'instrument',name:'Cello',instrumentFamily:'cello'});const bow=await createAsset({profileType:'bow',name:'Bow'});expect(cello.profileType).toBe('instrument');expect(bow.profileType).toBe('bow');expect(await db.assets.count()).toBe(2)});it('installs a set, replaces only one, closes it, and preserves history',async()=>{const cello=await createAsset({profileType:'instrument',name:'Cello',instrumentFamily:'cello'});await logStringChange(cello.id,'2026-01-01',['A','D','G','C'].map(position=>({position,brand:'First',model:'Set'})));await logStringChange(cello.id,'2026-02-01',[{position:'A',brand:'Second',model:'Solo'}]);const current=await currentSetup(cello.id);expect(current).toHaveLength(4);expect(current.find(x=>x.position==='A')?.brand).toBe('Second');expect(current.find(x=>x.position==='D')?.brand).toBe('First');const history=await db.installations.where('assetId').equals(cello.id).toArray();expect(history).toHaveLength(5);expect(history.find(x=>x.position==='A'&&x.brand==='First')?.removedDate).toBe('2026-02-01')});it('safely deletes a latest string change and restores its predecessor',async()=>{const cello=await createAsset({profileType:'instrument',name:'Cello',instrumentFamily:'cello'});await logStringChange(cello.id,'2026-01-01',[{position:'A',brand:'First',model:'Set'}]);const replacement=await logStringChange(cello.id,'2026-02-01',[{position:'A',brand:'Second',model:'Solo'}]);await deleteEvent(replacement.id);const setup=await currentSetup(cello.id);expect(setup).toHaveLength(1);expect(setup[0].brand).toBe('First');expect(setup[0].removedDate).toBeUndefined()});it('protects an older string change once a later replacement exists',async()=>{const cello=await createAsset({profileType:'instrument',name:'Cello',instrumentFamily:'cello'});const first=await logStringChange(cello.id,'2026-01-01',[{position:'A',brand:'First',model:'Set'}]);await logStringChange(cello.id,'2026-02-01',[{position:'A',brand:'Second',model:'Solo'}]);await expect(deleteEvent(first.id)).rejects.toThrow(/later replacements/);expect(await db.installations.where('assetId').equals(cello.id).count()).toBe(2)});it('creates a rehair event and linked reminder',async()=>{const bow=await createAsset({profileType:'bow',name:'Bow'});const event=await logMaintenance(bow.id,'bow-rehair','Rehair','2026-01-01',{reminderDate:'2026-07-01'});expect((await db.events.get(event.id))?.workType).toBe('Rehair');expect((await db.reminders.toArray())[0].maintenanceEventId).toBe(event.id)});it('archives and restores without removing history',async()=>{const asset=await createAsset({profileType:'instrument',name:'Violin',instrumentFamily:'violin'});await setArchived(asset.id,true);expect((await db.assets.get(asset.id))?.status).toBe('archived');await setArchived(asset.id,false);expect((await db.assets.get(asset.id))?.status).toBe('active')});it('persists and retrieves through a reopened database',async()=>{const other=new JournalDB(`persistence-${Date.now()}`);await other.open();await other.assets.add({id:'1',profileType:'bow',name:'Saved bow',status:'active',createdAt:'now',updatedAt:'now'});other.close();const reopened=new JournalDB(other.name);expect((await reopened.assets.get('1'))?.name).toBe('Saved bow');await reopened.delete()})});
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { JournalDB } from './db';
+import { db } from './db';
+import {
+  createAsset,
+  currentSetup,
+  deleteEvent,
+  logMaintenance,
+  logStringChange,
+  setArchived,
+} from './services';
+beforeEach(async () => {
+  await db.delete();
+  await db.open();
+});
+afterEach(() => db.close());
+describe('local journal data behavior', () => {
+  it('creates distinct instrument and bow profiles', async () => {
+    const cello = await createAsset({
+      profileType: 'instrument',
+      name: 'Cello',
+      instrumentFamily: 'cello',
+    });
+    const bow = await createAsset({ profileType: 'bow', name: 'Bow' });
+    expect(cello.profileType).toBe('instrument');
+    expect(bow.profileType).toBe('bow');
+    expect(await db.assets.count()).toBe(2);
+  });
+  it('installs a set, replaces only one, closes it, and preserves history', async () => {
+    const cello = await createAsset({
+      profileType: 'instrument',
+      name: 'Cello',
+      instrumentFamily: 'cello',
+    });
+    await logStringChange(
+      cello.id,
+      '2026-01-01',
+      ['A', 'D', 'G', 'C'].map((position) => ({
+        position,
+        brand: 'First',
+        model: 'Set',
+      })),
+    );
+    await logStringChange(cello.id, '2026-02-01', [
+      { position: 'A', brand: 'Second', model: 'Solo' },
+    ]);
+    const current = await currentSetup(cello.id);
+    expect(current).toHaveLength(4);
+    expect(current.find((x) => x.position === 'A')?.brand).toBe('Second');
+    expect(current.find((x) => x.position === 'D')?.brand).toBe('First');
+    const history = await db.installations
+      .where('assetId')
+      .equals(cello.id)
+      .toArray();
+    expect(history).toHaveLength(5);
+    expect(
+      history.find((x) => x.position === 'A' && x.brand === 'First')
+        ?.removedDate,
+    ).toBe('2026-02-01');
+  });
+  it('safely deletes a latest string change and restores its predecessor', async () => {
+    const cello = await createAsset({
+      profileType: 'instrument',
+      name: 'Cello',
+      instrumentFamily: 'cello',
+    });
+    await logStringChange(cello.id, '2026-01-01', [
+      { position: 'A', brand: 'First', model: 'Set' },
+    ]);
+    const replacement = await logStringChange(cello.id, '2026-02-01', [
+      { position: 'A', brand: 'Second', model: 'Solo' },
+    ]);
+    await deleteEvent(replacement.id);
+    const setup = await currentSetup(cello.id);
+    expect(setup).toHaveLength(1);
+    expect(setup[0].brand).toBe('First');
+    expect(setup[0].removedDate).toBeUndefined();
+  });
+  it('protects an older string change once a later replacement exists', async () => {
+    const cello = await createAsset({
+      profileType: 'instrument',
+      name: 'Cello',
+      instrumentFamily: 'cello',
+    });
+    const first = await logStringChange(cello.id, '2026-01-01', [
+      { position: 'A', brand: 'First', model: 'Set' },
+    ]);
+    await logStringChange(cello.id, '2026-02-01', [
+      { position: 'A', brand: 'Second', model: 'Solo' },
+    ]);
+    await expect(deleteEvent(first.id)).rejects.toThrow(/later replacements/);
+    expect(
+      await db.installations.where('assetId').equals(cello.id).count(),
+    ).toBe(2);
+  });
+  it('creates a rehair event and linked reminder', async () => {
+    const bow = await createAsset({ profileType: 'bow', name: 'Bow' });
+    const event = await logMaintenance(
+      bow.id,
+      'bow-rehair',
+      'Rehair',
+      '2026-01-01',
+      { reminderDate: '2026-07-01' },
+    );
+    expect((await db.events.get(event.id))?.workType).toBe('Rehair');
+    expect((await db.reminders.toArray())[0].maintenanceEventId).toBe(event.id);
+  });
+  it('archives and restores without removing history', async () => {
+    const asset = await createAsset({
+      profileType: 'instrument',
+      name: 'Violin',
+      instrumentFamily: 'violin',
+    });
+    await setArchived(asset.id, true);
+    expect((await db.assets.get(asset.id))?.status).toBe('archived');
+    await setArchived(asset.id, false);
+    expect((await db.assets.get(asset.id))?.status).toBe('active');
+  });
+  it('persists and retrieves through a reopened database', async () => {
+    const other = new JournalDB(`persistence-${Date.now()}`);
+    await other.open();
+    await other.assets.add({
+      id: '1',
+      profileType: 'bow',
+      name: 'Saved bow',
+      status: 'active',
+      createdAt: 'now',
+      updatedAt: 'now',
+    });
+    other.close();
+    const reopened = new JournalDB(other.name);
+    expect((await reopened.assets.get('1'))?.name).toBe('Saved bow');
+    await reopened.delete();
+  });
+});
