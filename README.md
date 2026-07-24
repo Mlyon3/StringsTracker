@@ -28,7 +28,14 @@ React Router uses the same basename. A push to `main` runs the **Deploy GitHub
 Pages** workflow, which builds the application and deploys only the generated
 `dist` directory. The workflow also supplies `dist/404.html` so directly opening
 an application route is handled by React Router instead of returning GitHub's
-default 404 page.
+default 404 page. Its final step requests the deployed HTML and every referenced
+asset, so a deployment with missing or root-relative files fails visibly.
+
+If a browser that visited an older broken deployment continues to show a blank
+page, open
+[`/StringsTracker/reset-app.html`](https://mlyon3.github.io/StringsTracker/reset-app.html)
+once. This removes only the application's service-worker caches and reloads the
+current deployment; journal records in IndexedDB are not removed.
 
 The development-only **Load clearly marked demo data** button creates the requested cello, mixed Larsen/Spirocore setup, bow, rehair, and reminder. It is shown only when the database is empty and is excluded from production behavior.
 

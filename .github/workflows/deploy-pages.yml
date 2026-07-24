@@ -43,3 +43,7 @@ jobs:
       - name: Deploy Vite output
         id: deployment
         uses: actions/deploy-pages@v4
+      - name: Verify deployed application assets
+        env:
+          PAGES_URL: ${{ steps.deployment.outputs.page_url }}
+        run: npm run verify:pages:deployed

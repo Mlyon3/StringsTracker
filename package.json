@@ -7,7 +7,8 @@
     "test": "vitest run",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "verify:pages": "node scripts/verify-pages-build.mjs"
+    "verify:pages": "node scripts/verify-pages-build.mjs",
+    "verify:pages:deployed": "node scripts/verify-pages-deployment.mjs"
   },
   "dependencies": {
     "@vitejs/plugin-react": "6.0.4",

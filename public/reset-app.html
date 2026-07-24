@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Reset String Ledger application cache</title>
+    <style>
+      body {
+        margin: 0;
+        background: #f5f3ee;
+        color: #173f38;
+        font:
+          1rem/1.5 system-ui,
+          sans-serif;
+      }
+      main {
+        box-sizing: border-box;
+        max-width: 42rem;
+        margin: 10vh auto;
+        padding: 2rem;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Refreshing String Ledger</h1>
+      <p id="status" role="status">Removing an outdated application cache…</p>
+      <noscript
+        >JavaScript is required to reset the application cache.</noscript
+      >
+    </main>
+    <script>
+      async function resetApplicationCache() {
+        const registrations = await navigator.serviceWorker?.getRegistrations();
+        await Promise.all(
+          (registrations ?? []).map((registration) =>
+            registration.unregister(),
+          ),
+        );
+
+        const cacheNames = await caches?.keys();
+        await Promise.all(
+          (cacheNames ?? []).map((name) => caches.delete(name)),
+        );
+
+        document.querySelector('#status').textContent =
+          'Cache cleared. Returning to String Ledger…';
+        window.location.replace(`./?cache-reset=${Date.now()}`);
+      }
+
+      resetApplicationCache().catch((error) => {
+        document.querySelector('#status').textContent =
+          'The cache could not be reset automatically. Clear this site’s browser data and reload.';
+        console.error(error);
+      });
+    </script>
+  </body>
+</html>
