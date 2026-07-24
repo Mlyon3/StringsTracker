@@ -15,7 +15,7 @@ String Ledger is a mobile-first maintenance journal for string instruments and b
 Requires a current Node.js LTS release.
 
 ```bash
-npm install
+npm ci
 npm run dev
 ```
 
@@ -28,6 +28,7 @@ npm run typecheck
 npm run lint
 npm test
 npm run build
+npm run format:check
 ```
 
 ## Local storage and offline behavior
