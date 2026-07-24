@@ -1,4 +1,4 @@
-import {db,uid} from './db'; import type {Asset,EventType,InstrumentFamily,MaintenanceEvent,Reminder,StringInstallation,UsualString} from './types';
+import {db,uid} from './db'; import type {Asset,EventType,InstrumentFamily,MaintenanceEvent,StringInstallation,UsualString} from './types';
 const now=()=>new Date().toISOString();
 export async function createAsset(input:{profileType:'instrument'|'bow';name:string;maker?:string;instrumentFamily?:InstrumentFamily;customPositions?:string[]}):Promise<Asset>{const stamp=now();const asset:Asset={...input,id:uid(),status:'active',createdAt:stamp,updatedAt:stamp};await db.assets.add(asset);return asset}
 export async function setArchived(id:string,archived:boolean){await db.assets.update(id,{status:archived?'archived':'active',updatedAt:now()})}
