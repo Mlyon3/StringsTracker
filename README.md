@@ -15,9 +15,27 @@ String Ledger is a mobile-first maintenance journal for string instruments and b
 Requires a current Node.js LTS release.
 
 ```bash
-npm install
+npm ci
 npm run dev
 ```
+
+## GitHub Pages deployment
+
+The production build is configured for
+[`https://mlyon3.github.io/StringsTracker/`](https://mlyon3.github.io/StringsTracker/).
+Vite emits application, PWA, and static-asset URLs below `/StringsTracker/`, and
+React Router uses the same basename. A push to `main` runs the **Deploy GitHub
+Pages** workflow, which builds the application and deploys only the generated
+`dist` directory. The workflow also supplies `dist/404.html` so directly opening
+an application route is handled by React Router instead of returning GitHub's
+default 404 page. Its final step requests the deployed HTML and every referenced
+asset, so a deployment with missing or root-relative files fails visibly.
+
+If a browser that visited an older broken deployment continues to show a blank
+page, open
+[`/StringsTracker/reset-app.html`](https://mlyon3.github.io/StringsTracker/reset-app.html)
+once. This removes only the application's service-worker caches and reloads the
+current deployment; journal records in IndexedDB are not removed.
 
 The development-only **Load clearly marked demo data** button creates the requested cello, mixed Larsen/Spirocore setup, bow, rehair, and reminder. It is shown only when the database is empty and is excluded from production behavior.
 
@@ -28,15 +46,25 @@ npm run typecheck
 npm run lint
 npm test
 npm run build
+npm run format:check
 ```
+
+For the safe pull-request merge and conflict-resolution workflow, see
+[`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md). In particular, use the existing
+GitHub repository rather than creating a second repository for a feature
+branch.
 
 ## Local storage and offline behavior
 
 Each mutation is written to the browser's IndexedDB database through Dexie. String replacement uses a transaction so closing the former installation and adding its replacement succeed together. No data leaves the device. The production service worker caches the application shell after initial load; entries remain usable through refresh, browser restart, and offline sessions. Clearing site data or using a different browser/profile removes or isolates the journal.
 
+## Backup and restore
+
+Open **Backup** in the application to download a versioned JSON copy of every journal record. Restore validates the complete file and its relationships before replacing the current journal in one transaction. Invalid or unsupported files leave existing data unchanged. Restore intentionally replaces rather than merges journals; download the current journal first if it may be needed later.
+
 ## Known limitations
 
-- No cloud backup, cross-device sync, accounts, or export
+- No cloud backup, cross-device sync, or accounts
 - Reminders appear in the app only; there are no push notifications
 - Usual setup is intentionally one preset per instrument
 - String-change dates are protected from direct editing, and changes with later replacements cannot be deleted
@@ -45,4 +73,4 @@ Each mutation is written to the browser's IndexedDB database through Dexie. Stri
 
 ## Sensible future extensions
 
-The next product task is field-testing the end-to-end logging loop with players, then improving profile/event editing and adding a user-controlled local export/import backup. Only after validating those workflows should optional encrypted sync or notification delivery be considered. See [`docs/PRODUCT_DECISIONS.md`](docs/PRODUCT_DECISIONS.md) for the scope rationale.
+The next product task is field-testing the end-to-end logging and backup loops with players, then improving profile/event editing and reducing repeated string-entry work. Only after validating those workflows should optional encrypted sync or notification delivery be considered. See [`docs/PRODUCT_DECISIONS.md`](docs/PRODUCT_DECISIONS.md) for the scope rationale.
