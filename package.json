@@ -6,7 +6,8 @@
     "lint": "eslint .",
     "test": "vitest run",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "verify:pages": "node scripts/verify-pages-build.mjs"
   },
   "dependencies": {
     "@vitejs/plugin-react": "6.0.4",

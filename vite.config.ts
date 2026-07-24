@@ -3,6 +3,7 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 export default defineConfig({
+  base: '/StringsTracker/',
   plugins: [
     react(),
     VitePWA({
@@ -15,6 +16,9 @@ export default defineConfig({
         theme_color: '#173f38',
         background_color: '#f5f3ee',
         display: 'standalone',
+        id: './',
+        start_url: './',
+        scope: './',
         icons: [{ src: 'icon.svg', sizes: 'any', type: 'image/svg+xml' }],
       },
       workbox: { navigateFallback: 'index.html' },

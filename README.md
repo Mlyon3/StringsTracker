@@ -19,6 +19,17 @@ npm ci
 npm run dev
 ```
 
+## GitHub Pages deployment
+
+The production build is configured for
+[`https://mlyon3.github.io/StringsTracker/`](https://mlyon3.github.io/StringsTracker/).
+Vite emits application, PWA, and static-asset URLs below `/StringsTracker/`, and
+React Router uses the same basename. A push to `main` runs the **Deploy GitHub
+Pages** workflow, which builds the application and deploys only the generated
+`dist` directory. The workflow also supplies `dist/404.html` so directly opening
+an application route is handled by React Router instead of returning GitHub's
+default 404 page.
+
 The development-only **Load clearly marked demo data** button creates the requested cello, mixed Larsen/Spirocore setup, bow, rehair, and reminder. It is shown only when the database is empty and is excluded from production behavior.
 
 ## Checks
@@ -30,6 +41,11 @@ npm test
 npm run build
 npm run format:check
 ```
+
+For the safe pull-request merge and conflict-resolution workflow, see
+[`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md). In particular, use the existing
+GitHub repository rather than creating a second repository for a feature
+branch.
 
 ## Local storage and offline behavior
 
